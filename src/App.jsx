@@ -11,7 +11,7 @@ const nav = [
 const units = ['g','kg','ml','L']
 const packs = [50,100,250,500,1,2,5,10,25,40,50]
 
-function App() {
+export default function App() {
   const [session,setSession]=useState(null)
   const [authLoading,setAuthLoading]=useState(true)
   const [active, setActive] = useState('Dashboard')
@@ -407,6 +407,5 @@ function SettingsView({products=[],stock=[],suppliers=[],customers=[],payments=[
     <div className="panel"><div className="panelHead"><div><h2>System & Backup</h2><span>Production controls</span></div><ExportBackup products={products} stock={stock} suppliers={suppliers} customers={customers} payments={payments} expenses={expenses}/></div><div className="statusList"><div><span>Database</span><b>Supabase Connected</b></div><div><span>Inventory</span><b>Purchase / Sales / Returns linked</b></div><div><span>Units</span><b>g · kg · ml · L</b></div><div><span>Billing</span><b>GST + Print Invoice</b></div><div><span>Stock Control</span><b>Manual Adjustment Enabled</b></div><div><span>Authentication</span><b>Supabase Auth</b></div><div><span>Backup</span><b>JSON Export</b></div></div></div>
   </div>
 }
-
 
 function Module({name}){return <div className="panel module"><div className="moduleIcon"><Package size={25}/></div><h2>{name}</h2><p>This module is reserved for the interconnected transaction workflow. Purchase and Sales will update Inventory, Ledgers and Reports automatically.</p><div className="coming">Next development stage</div></div>}
