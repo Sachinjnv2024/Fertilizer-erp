@@ -408,6 +408,5 @@ function SettingsView({products=[],stock=[],suppliers=[],customers=[],payments=[
   </div>
 }
 
-function Module({name}){return <div className="panel module"><div className="moduleIcon"><Package size={25}/></div><h2>{name}</h2><p>This module is reserved for the interconnected transaction workflow. Purchase and Sales will update Inventory, Ledgers and Reports automatically.</p><div className="coming">Next development stage</div></div>}
 
-createRoot(document.getElementById('root')).render(<App/>)
+function Module({name}){return <div className="panel module"><div className="moduleIcon"><Package size={25}/></div><h2>{name}</h2><p>This module is reserved for the interconnected transaction workflow. Purchase and Sales will update Inventory, Ledgers and Reports automatically.</p><div className="coming">Next development stage</div></div>}
