@@ -11,7 +11,7 @@ const nav = [
 const units = ['g','kg','ml','L']
 const packs = [50,100,250,500,1,2,5,10,25,40,50]
 
-function App() {
+export default function App() {
   const [session,setSession]=useState(null)
   const [authLoading,setAuthLoading]=useState(true)
   const [active, setActive] = useState('Dashboard')
