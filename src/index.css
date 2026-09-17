@@ -176,3 +176,18 @@ body{background:#e9edf1!important}
 @media(max-width:700px){.content{padding:14px 12px 86px!important}.titleRow{align-items:flex-start}.titleRow .muted{display:none}.referenceNav{margin-left:-2px;margin-right:-2px}.referenceQuick{grid-template-columns:repeat(4,1fr);gap:6px}.referenceQuick button{font-size:10px;padding:9px 3px}.referenceQuick b{font-size:18px}.main>header{padding:13px!important}.main>header .search{width:100%}.main>header .iconbtn,.main>header .avatar,.main>header .logoutBtn{display:none!important}.bottomReferenceNav{width:100%}.saleItemHead{display:none!important}.saleRows .purchaseRow{grid-template-columns:1fr 1fr!important}.saleRows .purchaseRow .rowField:first-child{grid-column:1/-1}.saleRows .purchaseRow .removeRowBtn{grid-column:2}.purchaseTotals{grid-template-columns:1fr 1fr!important}.purchaseTotals .totalBox{grid-column:1/-1}}
 
 .adjustPreview{margin:12px 0;padding:12px;border-radius:10px;background:#f1f7f4;display:flex;justify-content:space-between;align-items:center}.adjustPreview span{font-size:12px;color:#647572}.adjustPreview strong{font-size:16px;color:#173e36}
+/* Business branding alignment + logo upload */
+.referenceBrand{margin-bottom:0!important;flex:0 0 auto!important}
+.brandLogoWrap{display:flex;align-items:flex-start;gap:10px;min-width:370px}
+.brandLogoImg,.brandLogoFallback{width:38px;height:38px;flex:0 0 38px;border-radius:9px;object-fit:contain;background:#fff;display:grid;place-items:center;font-size:23px}
+.brandText{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start}
+.referenceBrand .brandName{line-height:1.15!important;margin:0!important}
+.referenceBrand .brandSub{line-height:1.15!important;margin:4px 0 0!important}
+.logoSettings{display:flex;gap:14px;align-items:center;padding:14px 0 18px;margin-bottom:17px;border-bottom:1px solid #edf1f0}
+.logoPreview{width:72px;height:72px;border:1px dashed #cbd9d5;border-radius:12px;display:grid;place-items:center;overflow:hidden;background:#f7faf9}
+.logoPreview img{width:100%;height:100%;object-fit:contain}
+.logoPreview span{font-size:34px}
+.logoSettings input[type=file]{display:block;margin-top:8px;font-size:11px;max-width:280px}
+.secondary{margin-top:8px;background:#fff;border:1px solid #e0e8e5;border-radius:7px;padding:7px 10px;color:#a33;font-size:11px;cursor:pointer}
+.invoiceBusiness{display:flex;gap:12px;align-items:flex-start}.invoiceLogo{width:55px;height:55px;object-fit:contain;border-radius:8px}
+@media(max-width:700px){.brandLogoWrap{min-width:0}.main>header{gap:10px!important}.referenceBrand{width:100%}.brandLogoImg,.brandLogoFallback{width:34px;height:34px;flex-basis:34px}.referenceBrand .brandName{font-size:17px!important}}

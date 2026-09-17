@@ -27,7 +27,7 @@ export default function App() {
   const [showSale, setShowSale] = useState(false)
   const [payments, setPayments] = useState([])
   const [expenses, setExpenses] = useState([])
-  const [businessSettings, setBusinessSettings] = useState({id:1,business_name:'My Fertilizer Store',address:'',mobile:'',email:'',gstin:'',state:'',invoice_prefix:'INV'})
+  const [businessSettings, setBusinessSettings] = useState({id:1,business_name:'My Fertilizer Store',address:'',mobile:'',email:'',gstin:'',state:'',invoice_prefix:'INV',logo_data:''})
   const [showPayment, setShowPayment] = useState(false)
   const [showExpense, setShowExpense] = useState(false)
 
@@ -66,7 +66,7 @@ export default function App() {
   return <div className="app">
     <main className="main">
       <header>
-        <div className="referenceBrand"><div className="brandName">🌾 {businessSettings.business_name || 'KUSHWAHA KHAD BEEJ BHANDAR'}</div><div className="brandSub">Fertilizer • Pesticide • Seed Distributor</div></div>
+        <div className="referenceBrand"><div className="brandLogoWrap">{businessSettings.logo_data ? <img className="brandLogoImg" src={businessSettings.logo_data} alt="Business logo"/> : <div className="brandLogoFallback">🌾</div>}<div className="brandText"><div className="brandName">{businessSettings.business_name || 'KUSHWAHA KHAD BEEJ BHANDAR'}</div><div className="brandSub">Fertilizer • Pesticide • Seed Distributor</div></div></div></div>
         <div className="search"><Search size={18}/><input placeholder="Search Dealer / Farmer / Invoice / Product"/></div>
       </header>
       <section className="content">
@@ -204,6 +204,7 @@ function ProductModal({product,close,reload}) {
   const [form,setForm]=useState(product||{product_name:'',brand:'',category:'Fertilizer',pack_size:50,unit:'g',purchase_rate:0,selling_rate:0,gst_percent:0,minimum_stock:0,status:'active'})
   const [saving,setSaving]=useState(false)
   const change=(k,v)=>setForm(f=>({...f,[k]:v}))
+  const logoChange=e=>{const file=e.target.files?.[0]; if(!file)return; if(file.size>600*1024){alert('Logo must be 600 KB or smaller.');e.target.value='';return} const reader=new FileReader(); reader.onload=()=>change('logo_data',reader.result); reader.readAsDataURL(file)}
   async function save(e){e.preventDefault();if(!supabase)return;setSaving(true)
     const payload={...form,pack_size:Number(form.pack_size),purchase_rate:Number(form.purchase_rate),selling_rate:Number(form.selling_rate),gst_percent:Number(form.gst_percent),minimum_stock:Number(form.minimum_stock)}
     if(product) await supabase.from('products').update(payload).eq('id',product.id)
@@ -372,7 +373,7 @@ function InvoicePrint({sale,businessSettings,close}) {
   return <div className="modalBack printBack"><div className="invoice modal">
     <div className="invoiceToolbar noPrint"><button className="secondary" onClick={close}>Close</button><button className="primary" onClick={printNow}>Print Invoice</button></div>
     <div className="invoicePage" id="printInvoice">
-      <div className="invoiceTop"><div><h1>{bs.business_name||'My Fertilizer Store'}</h1><p>Fertilizer & Agri Input Dealer</p>{bs.address&&<p>{bs.address}</p>} {(bs.mobile||bs.email)&&<p>{[bs.mobile,bs.email].filter(Boolean).join(' · ')}</p>}<p>GSTIN: {bs.gstin||'—'}</p></div><div className="invoiceMeta"><strong>TAX INVOICE</strong><span>Invoice: {sale.invoice_no}</span><span>Date: {sale.sale_date}</span><span>Time: {sale.created_at?new Date(sale.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}):'—'}</span></div></div>
+      <div className="invoiceTop"><div className="invoiceBusiness">{bs.logo_data&&<img className="invoiceLogo" src={bs.logo_data} alt="Business logo"/>}<div><h1>{bs.business_name||'My Fertilizer Store'}</h1><p>Fertilizer & Agri Input Dealer</p>{bs.address&&<p>{bs.address}</p>} {(bs.mobile||bs.email)&&<p>{[bs.mobile,bs.email].filter(Boolean).join(' · ')}</p>}<p>GSTIN: {bs.gstin||'—'}</p></div></div><div className="invoiceMeta"><strong>TAX INVOICE</strong><span>Invoice: {sale.invoice_no}</span><span>Date: {sale.sale_date}</span><span>Time: {sale.created_at?new Date(sale.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}):'—'}</span></div></div>
       <div className="billTo"><strong>Bill To</strong><span>{sale.customers?.customer_name||'Walk-in Customer'}</span><span>{sale.customers?.mobile||''}</span><span>{sale.customers?.address||''}</span><span>GSTIN: {sale.customers?.gstin||'—'}</span></div>
       <table><thead><tr><th>#</th><th>Product</th><th>Batch</th><th>Qty</th><th>Rate</th><th>GST %</th><th>Amount</th></tr></thead><tbody>{items.map((i,n)=><tr key={i.id}><td>{n+1}</td><td>{i.products?.product_name||i.product_id}<small>{i.products?.pack_size} {i.products?.unit}</small></td><td>{i.batch_no}</td><td>{i.quantity}</td><td>₹{Number(i.rate).toFixed(2)}</td><td>{i.gst}%</td><td>₹{Number(i.amount).toFixed(2)}</td></tr>)}</tbody></table>
       <div className="invoiceBottom"><div className="terms"><strong>Terms & Notes</strong><p>Goods once sold are subject to return policy. Please verify quantity and batch.</p></div><div className="invoiceTotals"><span>Subtotal <b>₹{Number(sale.subtotal||0).toFixed(2)}</b></span><span>Discount <b>₹{Number(sale.discount||0).toFixed(2)}</b></span><span>GST <b>₹{Number(sale.gst||0).toFixed(2)}</b></span><strong>Grand Total <b>₹{Number(sale.grand_total||0).toFixed(2)}</b></strong><span>Paid <b>₹{Number(sale.paid||0).toFixed(2)}</b></span><span>Due <b>₹{Number(sale.due||0).toFixed(2)}</b></span></div></div>
@@ -424,12 +425,13 @@ function StockAdjustmentModal({stock,close,reload}) {
   const change=row.direction==='add'?qty:-qty
   const newQty=current+change
   async function save(e){e.preventDefault();if(!supabase||!selected||qty<=0||!row.note.trim())return
+    if(row.direction==='reduce' && qty>current){alert(`Insufficient Stock: Available ${current}. Maximum reduction is ${current}.`);return}
     if(newQty<0){alert('Stock cannot go below zero.');return}
     if(!confirm(`${row.direction==='add'?'Add':'Reduce'} ${qty} stock? Current: ${current}, New: ${newQty}`))return
     setSaving(true)
     const {error}=await supabase.rpc('adjust_stock',{p_product_id:selected.product_id,p_batch_no:selected.batch_no,p_quantity_change:change,p_note:row.note.trim()})
     setSaving(false)
-    if(error) alert(error.message)
+    if(error) alert(error.message.replace('new row for relation \"stock\" violates check constraint \"stock_quantity_check\"','Stock correction would make stock negative.'))
     else {alert('Stock correction saved.');close();reload()}
   }
   return <div className="modalBack"><div className="modal"><div className="modalHead"><div><h2>Stock Correction / Adjustment</h2><span>Correct a wrong stock entry without deleting the ledger.</span></div><button onClick={close}><X/></button></div>
@@ -451,10 +453,11 @@ function SettingsView({products=[],stock=[],suppliers=[],customers=[],payments=[
   const [saving,setSaving]=useState(false)
   useEffect(()=>{if(businessSettings)setForm(businessSettings)},[businessSettings])
   const change=(k,v)=>setForm(f=>({...f,[k]:v}))
+  const logoChange=e=>{const file=e.target.files?.[0]; if(!file)return; if(file.size>600*1024){alert('Logo must be 600 KB or smaller.');e.target.value='';return} const reader=new FileReader(); reader.onload=()=>change('logo_data',reader.result); reader.readAsDataURL(file)}
   async function save(e){e.preventDefault();if(!supabase)return;setSaving(true);const {error}=await supabase.from('business_settings').upsert({...form,id:1,updated_at:new Date().toISOString()});setSaving(false);if(error)alert(error.message);else{onBusinessSettingsSaved?.({...form,id:1,updated_at:new Date().toISOString()});alert('Business settings saved.')}}
   return <div className="settingsGrid">
     <div className="panel"><div className="panelHead"><div><h2>Business Profile</h2><span>Details used for invoices and business identity</span></div></div>
-      <form onSubmit={save}><div className="formGrid"><label>Business / Shop Name<input required value={form.business_name} onChange={e=>change('business_name',e.target.value)}/></label><label>Mobile<input value={form.mobile||''} onChange={e=>change('mobile',e.target.value)}/></label><label>Email<input type="email" value={form.email||''} onChange={e=>change('email',e.target.value)}/></label><label>GSTIN<input value={form.gstin||''} onChange={e=>change('gstin',e.target.value.toUpperCase())}/></label><label>State<input value={form.state||''} onChange={e=>change('state',e.target.value)}/></label><label>Invoice Prefix<input value={form.invoice_prefix||'INV'} onChange={e=>change('invoice_prefix',e.target.value.toUpperCase())}/></label><label className="full">Address<textarea rows="3" value={form.address||''} onChange={e=>change('address',e.target.value)}/></label></div><div className="modalFoot"><button className="primary" disabled={saving}>{saving?'Saving...':'Save Business Settings'}</button></div></form>
+      <form onSubmit={save}><div className="logoSettings"><div className="logoPreview">{form.logo_data?<img src={form.logo_data} alt="Logo preview"/>:<span>🌾</span>}</div><div><strong>Business Logo</strong><p className="muted">Shown in header and printed invoices. PNG/JPG, max 600 KB.</p><input type="file" accept="image/png,image/jpeg,image/webp" onChange={logoChange}/>{form.logo_data&&<button type="button" className="secondary" onClick={()=>change('logo_data','')}>Remove Logo</button>}</div></div><div className="formGrid"><label>Business / Shop Name<input required value={form.business_name} onChange={e=>change('business_name',e.target.value)}/></label><label>Mobile<input value={form.mobile||''} onChange={e=>change('mobile',e.target.value)}/></label><label>Email<input type="email" value={form.email||''} onChange={e=>change('email',e.target.value)}/></label><label>GSTIN<input value={form.gstin||''} onChange={e=>change('gstin',e.target.value.toUpperCase())}/></label><label>State<input value={form.state||''} onChange={e=>change('state',e.target.value)}/></label><label>Invoice Prefix<input value={form.invoice_prefix||'INV'} onChange={e=>change('invoice_prefix',e.target.value.toUpperCase())}/></label><label className="full">Address<textarea rows="3" value={form.address||''} onChange={e=>change('address',e.target.value)}/></label></div><div className="modalFoot"><button className="primary" disabled={saving}>{saving?'Saving...':'Save Business Settings'}</button></div></form>
     </div>
     <div className="panel"><div className="panelHead"><div><h2>System & Backup</h2><span>Production controls</span></div><ExportBackup products={products} stock={stock} suppliers={suppliers} customers={customers} payments={payments} expenses={expenses}/></div><div className="statusList"><div><span>Database</span><b>Supabase Connected</b></div><div><span>Inventory</span><b>Purchase / Sales / Returns linked</b></div><div><span>Units</span><b>g · kg · ml · L</b></div><div><span>Billing</span><b>GST + Print Invoice</b></div><div><span>Stock Control</span><b>Manual Adjustment Enabled</b></div><div><span>Authentication</span><b>Supabase Auth</b></div><div><span>Backup</span><b>JSON Export</b></div></div></div>
   </div>

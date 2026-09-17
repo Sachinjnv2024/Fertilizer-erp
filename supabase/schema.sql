@@ -412,22 +412,29 @@ create or replace function public.adjust_stock(
 declare v_id uuid; v_qty numeric;
 begin
   if p_quantity_change = 0 then raise exception 'Quantity change cannot be zero'; end if;
-  select quantity into v_qty from stock
+  if p_note is null or btrim(p_note) = '' then raise exception 'Reason is required'; end if;
+
+  select id, quantity into v_id, v_qty from stock
     where product_id=p_product_id and batch_no=p_batch_no for update;
 
-  if p_quantity_change < 0 and coalesce(v_qty,0) < abs(p_quantity_change) then
-    raise exception 'Insufficient stock for adjustment';
+  if v_id is null then
+    if p_quantity_change < 0 then
+      raise exception 'No stock exists for this product/batch';
+    end if;
+    insert into stock(product_id,batch_no,quantity)
+      values(p_product_id,p_batch_no,p_quantity_change)
+      returning id into v_id;
+  else
+    if p_quantity_change < 0 and coalesce(v_qty,0) < abs(p_quantity_change) then
+      raise exception 'Insufficient stock. Available: %', coalesce(v_qty,0);
+    end if;
+    update stock
+      set quantity = quantity + p_quantity_change, updated_at=now()
+      where id=v_id;
   end if;
 
-  insert into stock(product_id,batch_no,quantity)
-  values(p_product_id,p_batch_no,p_quantity_change)
-  on conflict(product_id,batch_no) do update
-    set quantity=stock.quantity+excluded.quantity, updated_at=now()
-    returning id into v_id;
-
   insert into stock_movements(product_id,batch_no,movement_type,quantity_change,reference_id,note)
-  values(p_product_id,p_batch_no,'adjustment',p_quantity_change,v_id,p_note);
-
+    values(p_product_id,p_batch_no,'adjustment',p_quantity_change,v_id,p_note);
   return v_id;
 end $$;
 
