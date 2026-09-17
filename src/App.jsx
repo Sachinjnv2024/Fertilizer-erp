@@ -28,6 +28,7 @@ export default function App() {
   const [showSale, setShowSale] = useState(false)
   const [payments, setPayments] = useState([])
   const [expenses, setExpenses] = useState([])
+  const [businessSettings, setBusinessSettings] = useState({id:1,business_name:'My Fertilizer Store',address:'',mobile:'',email:'',gstin:'',state:'',invoice_prefix:'INV'})
   const [showPayment, setShowPayment] = useState(false)
   const [showExpense, setShowExpense] = useState(false)
 
@@ -41,15 +42,16 @@ export default function App() {
   async function loadData() {
     if (!supabase || !session) return
     setLoading(true)
-    const [{data:p}, {data:s}, {data:sp}, {data:sp2}, {data:pay}, {data:exp}] = await Promise.all([
+    const [{data:p}, {data:s}, {data:sp}, {data:sp2}, {data:pay}, {data:exp}, {data:bs}] = await Promise.all([
       supabase.from('products').select('*').order('created_at',{ascending:false}),
       supabase.from('stock').select('*, products(product_name,pack_size,unit)').order('updated_at',{ascending:false}),
       supabase.from('suppliers').select('*').order('supplier_name'),
       supabase.from('customers').select('*').order('customer_name'),
       supabase.from('payments').select('*').order('payment_date',{ascending:false}),
-      supabase.from('expenses').select('*').order('expense_date',{ascending:false})
+      supabase.from('expenses').select('*').order('expense_date',{ascending:false}),
+      supabase.from('business_settings').select('*').eq('id',1).maybeSingle()
     ])
-    setProducts(p || []); setStock(s || []); setSuppliers(sp || []); setCustomers(sp2 || []); setPayments(pay || []); setExpenses(exp || []); setLoading(false)
+    setProducts(p || []); setStock(s || []); setSuppliers(sp || []); setCustomers(sp2 || []); setPayments(pay || []); setExpenses(exp || []); if(bs) setBusinessSettings(bs); setLoading(false)
   }
   useEffect(()=>{ if(session) loadData() }, [session])
 
@@ -90,12 +92,12 @@ export default function App() {
         {active==='Suppliers' && <Suppliers suppliers={suppliers} reload={loadData}/>}
         {active==='Purchase' && <Purchase suppliers={suppliers} products={products} stock={stock} reload={loadData}/>}
         {active==='Customers' && <Customers customers={customers} reload={loadData}/>}
-        {active==='Sales / Billing' && <Sales products={products} customers={customers} stock={stock} reload={loadData}/>}
+        {active==='Sales / Billing' && <Sales products={products} customers={customers} stock={stock} reload={loadData} businessSettings={businessSettings}/>}
         {active==='Payments' && <PaymentsView payments={payments} customers={customers} suppliers={suppliers}/>}
         {active==='Expenses' && <ExpensesView expenses={expenses} reload={loadData}/>}
         {active==='Returns' && <Returns products={products} customers={customers} suppliers={suppliers} stock={stock} reload={loadData}/>}
         {active==='Reports' && <ReportsView products={products} stock={stock} payments={payments} expenses={expenses} suppliers={suppliers} customers={customers}/>}
-        {active==='Settings' && <SettingsView products={products} stock={stock} suppliers={suppliers} customers={customers} payments={payments} expenses={expenses}/>}
+        {active==='Settings' && <SettingsView products={products} stock={stock} suppliers={suppliers} customers={customers} payments={payments} expenses={expenses} businessSettings={businessSettings} onBusinessSettingsSaved={setBusinessSettings}/>}
         {!['Dashboard','Products','Inventory','Suppliers','Purchase','Customers','Sales / Billing','Payments','Expenses','Returns','Reports','Settings'].includes(active) && <Module name={active}/>}
       </section>
     </main>
@@ -239,7 +241,7 @@ function CustomerModal({close,reload}) {
   async function save(e){e.preventDefault();if(!supabase)return;setSaving(true);await supabase.from('customers').insert({...f,opening_balance:Number(f.opening_balance)});setSaving(false);reload();close()}
   return <div className="modalBack"><div className="modal"><div className="modalHead"><div><h2>Add Customer</h2><span>Customer Master</span></div><button onClick={close}><X/></button></div><form onSubmit={save}><div className="formGrid"><label>Customer Name<input required value={f.customer_name} onChange={e=>c('customer_name',e.target.value)}/></label><label>Mobile<input value={f.mobile} onChange={e=>c('mobile',e.target.value)}/></label><label>GSTIN<input value={f.gstin} onChange={e=>c('gstin',e.target.value)}/></label><label>Opening Balance<input type="number" min="0" step=".01" value={f.opening_balance} onChange={e=>c('opening_balance',e.target.value)}/></label><label style={{gridColumn:'1/-1'}}>Address<input value={f.address} onChange={e=>c('address',e.target.value)}/></label></div><div className="modalFoot"><button type="button" className="secondary" onClick={close}>Cancel</button><button className="primary" disabled={saving}>{saving?'Saving...':'Save Customer'}</button></div></form></div></div>
 }
-function Sales({products,customers,stock,reload}) {
+function Sales({products,customers,stock,reload,businessSettings}) {
   const [sales,setSales]=useState([])
   const [selected,setSelected]=useState(null)
   useEffect(()=>{ if(!supabase)return; supabase.from('sales').select('*, customers(customer_name,mobile,address,gstin), sale_items(*, products(product_name,pack_size,unit))').order('created_at',{ascending:false}).limit(50).then(({data})=>setSales(data||[])) },[])
@@ -248,7 +250,7 @@ function Sales({products,customers,stock,reload}) {
       <div className="tableWrap"><table><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Subtotal</th><th>GST</th><th>Total</th><th>Paid</th><th>Due</th><th></th></tr></thead>
       <tbody>{sales.length?sales.map(x=><tr key={x.id}><td><strong>{x.invoice_no}</strong></td><td>{x.sale_date}</td><td>{x.customers?.customer_name||'Walk-in'}</td><td>₹{Number(x.subtotal||0).toFixed(2)}</td><td>₹{Number(x.gst||0).toFixed(2)}</td><td>₹{Number(x.grand_total||0).toFixed(2)}</td><td>₹{Number(x.paid||0).toFixed(2)}</td><td>₹{Number(x.due||0).toFixed(2)}</td><td><button className="secondary smallBtn" onClick={()=>setSelected(x)}>Print</button></td></tr>):<tr><td colSpan="9" className="empty">No sales invoices yet. Create a bill to begin.</td></tr>}</tbody></table></div>
     </div>
-    {selected && <InvoicePrint sale={selected} close={()=>setSelected(null)}/>}
+    {selected && <InvoicePrint sale={selected} businessSettings={businessSettings} close={()=>setSelected(null)}/>}
   </div>
 }
 
@@ -329,13 +331,14 @@ function LedgerReport({parties,payments,type,sales,purchases}) {
 
 
 
-function InvoicePrint({sale,close}) {
+function InvoicePrint({sale,businessSettings,close}) {
+  const bs=businessSettings||{}
   function printNow(){ window.print() }
   const items=sale.sale_items||[]
   return <div className="modalBack printBack"><div className="invoice modal">
     <div className="invoiceToolbar noPrint"><button className="secondary" onClick={close}>Close</button><button className="primary" onClick={printNow}>Print Invoice</button></div>
     <div className="invoicePage" id="printInvoice">
-      <div className="invoiceTop"><div><h1>MY FERTILIZER STORE</h1><p>Fertilizer & Agri Input Dealer</p><p>Address / Mobile / Email</p><p>GSTIN: __________________</p></div><div className="invoiceMeta"><strong>TAX INVOICE</strong><span>Invoice: {sale.invoice_no}</span><span>Date: {sale.sale_date}</span></div></div>
+      <div className="invoiceTop"><div><h1>{bs.business_name||'My Fertilizer Store'}</h1><p>Fertilizer & Agri Input Dealer</p>{bs.address&&<p>{bs.address}</p>} {(bs.mobile||bs.email)&&<p>{[bs.mobile,bs.email].filter(Boolean).join(' · ')}</p>}<p>GSTIN: {bs.gstin||'—'}</p></div><div className="invoiceMeta"><strong>TAX INVOICE</strong><span>Invoice: {sale.invoice_no}</span><span>Date: {sale.sale_date}</span></div></div>
       <div className="billTo"><strong>Bill To</strong><span>{sale.customers?.customer_name||'Walk-in Customer'}</span><span>{sale.customers?.mobile||''}</span><span>{sale.customers?.address||''}</span><span>GSTIN: {sale.customers?.gstin||'—'}</span></div>
       <table><thead><tr><th>#</th><th>Product</th><th>Batch</th><th>Qty</th><th>Rate</th><th>GST %</th><th>Amount</th></tr></thead><tbody>{items.map((i,n)=><tr key={i.id}><td>{n+1}</td><td>{i.products?.product_name||i.product_id}<small>{i.products?.pack_size} {i.products?.unit}</small></td><td>{i.batch_no}</td><td>{i.quantity}</td><td>₹{Number(i.rate).toFixed(2)}</td><td>{i.gst}%</td><td>₹{Number(i.amount).toFixed(2)}</td></tr>)}</tbody></table>
       <div className="invoiceBottom"><div className="terms"><strong>Terms & Notes</strong><p>Goods once sold are subject to return policy. Please verify quantity and batch.</p></div><div className="invoiceTotals"><span>Subtotal <b>₹{Number(sale.subtotal||0).toFixed(2)}</b></span><span>Discount <b>₹{Number(sale.discount||0).toFixed(2)}</b></span><span>GST <b>₹{Number(sale.gst||0).toFixed(2)}</b></span><strong>Grand Total <b>₹{Number(sale.grand_total||0).toFixed(2)}</b></strong><span>Paid <b>₹{Number(sale.paid||0).toFixed(2)}</b></span><span>Due <b>₹{Number(sale.due||0).toFixed(2)}</b></span></div></div>
@@ -394,12 +397,12 @@ function StockAdjustmentModal({stock,close,reload}) {
   </div></div>
 }
 
-function SettingsView({products=[],stock=[],suppliers=[],customers=[],payments=[],expenses=[]}) {
-  const [form,setForm]=useState({id:1,business_name:'My Fertilizer Store',address:'',mobile:'',email:'',gstin:'',state:'',invoice_prefix:'INV'})
+function SettingsView({products=[],stock=[],suppliers=[],customers=[],payments=[],expenses=[],businessSettings,onBusinessSettingsSaved}) {
+  const [form,setForm]=useState(businessSettings||{id:1,business_name:'My Fertilizer Store',address:'',mobile:'',email:'',gstin:'',state:'',invoice_prefix:'INV'})
   const [saving,setSaving]=useState(false)
-  useEffect(()=>{if(!supabase)return;supabase.from('business_settings').select('*').eq('id',1).maybeSingle().then(({data})=>{if(data)setForm(data)})},[])
+  useEffect(()=>{if(businessSettings)setForm(businessSettings)},[businessSettings])
   const change=(k,v)=>setForm(f=>({...f,[k]:v}))
-  async function save(e){e.preventDefault();if(!supabase)return;setSaving(true);const {error}=await supabase.from('business_settings').upsert({...form,id:1,updated_at:new Date().toISOString()});setSaving(false);if(error)alert(error.message);else alert('Business settings saved.')}
+  async function save(e){e.preventDefault();if(!supabase)return;setSaving(true);const {error}=await supabase.from('business_settings').upsert({...form,id:1,updated_at:new Date().toISOString()});setSaving(false);if(error)alert(error.message);else{onBusinessSettingsSaved?.({...form,id:1,updated_at:new Date().toISOString()});alert('Business settings saved.')}}
   return <div className="settingsGrid">
     <div className="panel"><div className="panelHead"><div><h2>Business Profile</h2><span>Details used for invoices and business identity</span></div></div>
       <form onSubmit={save}><div className="formGrid"><label>Business / Shop Name<input required value={form.business_name} onChange={e=>change('business_name',e.target.value)}/></label><label>Mobile<input value={form.mobile||''} onChange={e=>change('mobile',e.target.value)}/></label><label>Email<input type="email" value={form.email||''} onChange={e=>change('email',e.target.value)}/></label><label>GSTIN<input value={form.gstin||''} onChange={e=>change('gstin',e.target.value.toUpperCase())}/></label><label>State<input value={form.state||''} onChange={e=>change('state',e.target.value)}/></label><label>Invoice Prefix<input value={form.invoice_prefix||'INV'} onChange={e=>change('invoice_prefix',e.target.value.toUpperCase())}/></label><label className="full">Address<textarea rows="3" value={form.address||''} onChange={e=>change('address',e.target.value)}/></label></div><div className="modalFoot"><button className="primary" disabled={saving}>{saving?'Saving...':'Save Business Settings'}</button></div></form>
