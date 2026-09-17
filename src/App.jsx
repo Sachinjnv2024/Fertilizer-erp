@@ -417,17 +417,32 @@ function PurchaseReturn({products,suppliers,stock,reload}) {
 
 
 function StockAdjustmentModal({stock,close,reload}) {
-  const [row,setRow]=useState({stock_id:stock[0]?.id||'',change:0,note:''}),[saving,setSaving]=useState(false)
+  const [row,setRow]=useState({stock_id:stock[0]?.id||'',direction:'reduce',quantity:0,note:''}),[saving,setSaving]=useState(false)
   const selected=stock.find(x=>x.id===row.stock_id)
-  async function save(e){e.preventDefault();if(!supabase||!selected||Number(row.change)===0)return;setSaving(true)
-    const {error}=await supabase.rpc('adjust_stock',{p_product_id:selected.product_id,p_batch_no:selected.batch_no,p_quantity_change:Number(row.change),p_note:row.note||'Manual stock adjustment'})
-    setSaving(false);if(error)alert(error.message);else{alert('Stock adjusted successfully.');close();reload()}
+  const current=Number(selected?.quantity||0)
+  const qty=Math.abs(Number(row.quantity||0))
+  const change=row.direction==='add'?qty:-qty
+  const newQty=current+change
+  async function save(e){e.preventDefault();if(!supabase||!selected||qty<=0||!row.note.trim())return
+    if(newQty<0){alert('Stock cannot go below zero.');return}
+    if(!confirm(`${row.direction==='add'?'Add':'Reduce'} ${qty} stock? Current: ${current}, New: ${newQty}`))return
+    setSaving(true)
+    const {error}=await supabase.rpc('adjust_stock',{p_product_id:selected.product_id,p_batch_no:selected.batch_no,p_quantity_change:change,p_note:row.note.trim()})
+    setSaving(false)
+    if(error) alert(error.message)
+    else {alert('Stock correction saved.');close();reload()}
   }
-  return <div className="modalBack"><div className="modal"><div className="modalHead"><div><h2>Stock Adjustment</h2><span>Use + to add and − to reduce physical stock</span></div><button onClick={close}><X/></button></div>
-    <form onSubmit={save}><div className="formGrid"><label>Product / Batch<select value={row.stock_id} onChange={e=>setRow({...row,stock_id:e.target.value})}>{stock.map(x=><option key={x.id} value={x.id}>{x.products?.product_name} · {x.batch_no} · Current {x.quantity}</option>)}</select></label>
-    <label>Quantity Change<input required type="number" step=".001" value={row.change} onChange={e=>setRow({...row,change:e.target.value})}/></label>
-    <label className="full">Reason / Note<input value={row.note} onChange={e=>setRow({...row,note:e.target.value})} placeholder="Damage, physical count, opening correction..."/></label></div>
-    <div className="modalFoot"><button type="button" className="secondary" onClick={close}>Cancel</button><button className="primary" disabled={saving}>{saving?'Saving...':'Apply Adjustment'}</button></div></form>
+  return <div className="modalBack"><div className="modal"><div className="modalHead"><div><h2>Stock Correction / Adjustment</h2><span>Correct a wrong stock entry without deleting the ledger.</span></div><button onClick={close}><X/></button></div>
+    <form onSubmit={save}><div className="formGrid">
+      <label className="full">Product / Batch<select value={row.stock_id} onChange={e=>setRow({...row,stock_id:e.target.value})}>{stock.map(x=><option key={x.id} value={x.id}>{x.products?.product_name} · {x.batch_no} · Current {x.quantity} {x.products?.unit||''}</option>)}</select></label>
+      <label>Correction Type<select value={row.direction} onChange={e=>setRow({...row,direction:e.target.value})}><option value="reduce">Reduce Stock (−)</option><option value="add">Add Stock (+)</option></select></label>
+      <label>Quantity<input required min="0.001" step=".001" type="number" value={row.quantity} onChange={e=>setRow({...row,quantity:e.target.value})}/></label>
+      <label>Current Stock<input value={current} readOnly/></label>
+      <label>New Stock<input value={newQty} readOnly/></label>
+      <label className="full">Reason / Note<input required value={row.note} onChange={e=>setRow({...row,note:e.target.value})} placeholder="Wrong purchase entry, physical count, damaged stock..."/></label>
+    </div>
+    <div className="adjustPreview"><span>Stock will change</span><strong>{current} → {newQty}</strong></div>
+    <div className="modalFoot"><button type="button" className="secondary" onClick={close}>Cancel</button><button className="primary" disabled={saving||qty<=0||!row.note.trim()||newQty<0}>{saving?'Saving...':'Save Correction'}</button></div></form>
   </div></div>
 }
 
