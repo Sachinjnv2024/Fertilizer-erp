@@ -241,9 +241,10 @@ function SupplierModal({close,reload}) {
 }
 function Purchase({products,suppliers,reload}) {
   const [show,setShow]=useState(false)
-  return <div className="panel"><div className="panelHead"><h2>Purchase Management</h2><span className="count">Purchase → Stock +</span></div><div className="empty"><h3>No purchase invoices yet</h3><p>Create a purchase to automatically increase batch stock.</p><button className="primary" style={{margin:'10px auto'}} onClick={()=>setShow(true)}><Plus size={17}/> New Purchase</button></div>{show&&<PurchaseModal products={products} suppliers={suppliers} close={()=>setShow(false)} reload={reload}/>}</div>
+  return <div className="panel"><div className="panelHead"><h2>Purchase Management</h2><span className="count">Purchase → Stock +</span></div><div className="empty"><h3>Purchase / Stock Intake</h3><p>Create a purchase to automatically increase batch stock.</p><button className="primary" style={{margin:'10px auto'}} onClick={()=>setShow(true)}><Plus size={17}/> New Purchase</button></div>{show&&<PurchaseModal products={products} suppliers={suppliers} close={()=>setShow(false)} reload={reload}/>}</div>
 }
 function PurchaseModal({products,suppliers,close,reload}) {
+  const now=new Date()
   const [supplier,setSupplier]=useState(suppliers[0]?.id||''); const [date,setDate]=useState(new Date().toISOString().slice(0,10))
   const [rows,setRows]=useState([{product_id:products[0]?.id||'',batch_no:'',quantity:1,rate:products[0]?.purchase_rate||0,gst:0}])
   const [paid,setPaid]=useState(0),[discount,setDiscount]=useState(0),[transport,setTransport]=useState(0),[mode,setMode]=useState('Credit'),[saving,setSaving]=useState(false)

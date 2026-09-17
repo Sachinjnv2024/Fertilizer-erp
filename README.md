@@ -1,3 +1,4 @@
-# Fertilizer ERP – V19 Sales Billing Update
+# Fertilizer ERP V22 – Tabs Fixed
 
-Based on the V18 reference UI ERP. Sales billing now clearly labels Product, Batch, Quantity, Rate and GST %, and recent sales/invoice print show the saved transaction time from `sales.created_at`.
+Fixed the Purchase / Stock Intake tab crash caused by an undefined `now` variable in PurchaseModal. The Purchase modal now opens normally and displays the current time.
+Existing React + Supabase workflows are preserved.
