@@ -1,5 +1,3 @@
-# Fertilizer ERP V20
+# Fertilizer ERP – V19 Sales Billing Update
 
-Sales billing now clearly shows Product, Batch, Quantity, Rate, GST %, Amount, and a live Subtotal. Sales transactions retain date/time support from V19.
-
-Deploy with Netlify using `npm run build` and publish `dist`.
+Based on the V18 reference UI ERP. Sales billing now clearly labels Product, Batch, Quantity, Rate and GST %, and recent sales/invoice print show the saved transaction time from `sales.created_at`.
