@@ -6,7 +6,7 @@ import './index.css'
 const nav = [
   ['Dashboard', LayoutDashboard], ['Products', Package], ['Inventory', Package],
   ['Purchase', Truck], ['Sales / Billing', Receipt], ['Customers', Users],
-  ['Suppliers', Truck], ['Payments', Wallet], ['Expenses', Wallet], ['Returns', RefreshCw], ['Reports', BarChart3], ['Settings', Settings]
+  ['Suppliers', Truck], ['Payments', Wallet], ['Expenses', Wallet], ['Returns', RefreshCw], ['Reports', BarChart3]
 ]
 const units = ['g','kg','ml','L']
 const packs = [50,100,250,500,1,2,5,10,25,40,50]
@@ -86,7 +86,7 @@ export default function App() {
         {active==='Returns' && <span className="count">Sales return ↑ stock · Purchase return ↓ stock</span> }
         </div>
         {!supabase && <div className="warning"><AlertTriangle size={18}/><span>Supabase is not connected yet. Add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local.</span></div>}
-        {active==='Dashboard' && <Dashboard products={products} stock={stock} totalStock={totalStock} lowStock={lowStock}/>}
+        {active==='Dashboard' && <Dashboard products={products} stock={stock} totalStock={totalStock} lowStock={lowStock} setActive={setActive} setShowSale={setShowSale} setShowPurchase={setShowPurchase} setShowProduct={setShowProduct} setShowCustomer={setShowCustomer} expenses={expenses}/>}
         {active==='Products' && <Products products={products} stock={stock} reload={loadData} onAdd={()=>setShowProduct(true)}/>}
         {active==='Inventory' && <Inventory stock={stock} products={products} reload={loadData}/>}
         {active==='Suppliers' && <Suppliers suppliers={suppliers} reload={loadData}/>}
@@ -135,17 +135,43 @@ function ExportBackup({products,stock,suppliers,customers,payments,expenses}) {
   return <button className="secondary" onClick={download}><Download size={16}/> Export Data Backup</button>
 }
 
-function Dashboard({products,stock,totalStock,lowStock}) {
-  const stockValue = stock.reduce((n,s)=>n+Number(s.quantity||0)*Number(s.products?.pack_size||0),0)
-  return <><div className="cards">
-    <div className="card"><span>Products</span><strong>{products.length}</strong><small>Active product master</small></div>
-    <div className="card"><span>Stock Lines</span><strong>{stock.length}</strong><small>Batch records</small></div>
-    <div className="card"><span>Total Quantity</span><strong>{totalStock.toLocaleString()}</strong><small>Pack units recorded</small></div>
-    <div className="card"><span>Low Stock</span><strong>{lowStock.length}</strong><small>Needs attention</small></div>
+function Dashboard({products,stock,totalStock,lowStock,setActive,setShowSale,setShowPurchase,setShowProduct,setShowCustomer,expenses}) {
+  const [sales,setSales]=useState([]), [purchases,setPurchases]=useState([])
+  useEffect(()=>{
+    if(!supabase) return
+    Promise.all([
+      supabase.from('sales').select('sale_date,grand_total').order('sale_date',{ascending:false}).limit(200),
+      supabase.from('purchases').select('purchase_date,grand_total').order('purchase_date',{ascending:false}).limit(200)
+    ]).then(([a,b])=>{setSales(a.data||[]);setPurchases(b.data||[])})
+  },[])
+  const salesTotal=sales.reduce((n,x)=>n+Number(x.grand_total||0),0)
+  const purchaseTotal=purchases.reduce((n,x)=>n+Number(x.grand_total||0),0)
+  const expenseTotal=(expenses||[]).reduce((n,x)=>n+Number(x.amount||0),0)
+  const profit=salesTotal-purchaseTotal-expenseTotal
+  const stockValue=stock.reduce((n,s)=>n+Number(s.quantity||0)*Number(s.products?.pack_size||0),0)
+  const days=Array.from({length:7},(_,i)=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-(6-i));const key=d.toISOString().slice(0,10);return {key,label:d.toLocaleDateString(undefined,{weekday:'short'}),value:sales.filter(x=>x.sale_date===key).reduce((n,x)=>n+Number(x.grand_total||0),0)}})
+  const max=Math.max(1,...days.map(x=>x.value))
+  const go=(fn,active)=>{if(active)setActive(active);fn(true)}
+  return <div>
+    <div className="cards">
+      <div className="card"><span>Total Sales</span><strong>₹{salesTotal.toLocaleString(undefined,{maximumFractionDigits:2})}</strong><small>All recorded sales</small></div>
+      <div className="card"><span>Profit</span><strong>₹{profit.toLocaleString(undefined,{maximumFractionDigits:2})}</strong><small>Sales − Purchases</small></div>
+      <div className="card"><span>Stock Value</span><strong>₹{stockValue.toLocaleString(undefined,{maximumFractionDigits:2})}</strong><small>Current inventory basis</small></div>
+      <div className="card"><span>Low Stock</span><strong>{lowStock.length}</strong><small>Needs attention</small></div>
+    </div>
+    <div className="grid2">
+      <div className="panel"><div className="panelHead"><h2>Quick Actions</h2></div><div className="actions">
+        <button onClick={()=>go(setShowSale,'Sales / Billing')}><Plus/> New Sale</button>
+        <button onClick={()=>go(setShowPurchase,'Purchase')}><Plus/> New Purchase</button>
+        <button onClick={()=>go(setShowProduct,'Products')}><Package/> Add Product</button>
+        <button onClick={()=>go(setShowCustomer,'Customers')}><Users/> Add Customer</button>
+      </div></div>
+      <div className="panel"><div className="panelHead"><h2>Sales Trend</h2><button className="secondary smallBtn" onClick={()=>setActive('Reports')}>View Reports</button></div>
+        <div className="salesGraph">{days.map(x=><div className="graphCol" key={x.key}><div className="graphBar" style={{height:`${Math.max(6,(x.value/max)*150)}px`}} title={`₹${x.value.toFixed(2)}`}></div><span>{x.label}</span></div>)}</div>
+      </div>
+    </div>
+    <div className="panel tablePanel"><div className="panelHead"><h2>Stock Alerts</h2><button className="secondary smallBtn" onClick={()=>setActive('Inventory')}>View Inventory</button></div>{lowStock.length?<div className="alertList">{lowStock.map(p=><div className="alert" key={p.id}><AlertTriangle size={17}/><span>{p.product_name} is at or below minimum stock.</span></div>)}</div>:<div className="empty">No low-stock alerts.</div>}</div>
   </div>
-  <div className="grid2"><div className="panel"><div className="panelHead"><h2>Quick Actions</h2></div><div className="actions"><button><Plus/> New Sale</button><button><Plus/> New Purchase</button><button><Package/> Add Product</button><button><Users/> Add Customer</button></div></div>
-  <div className="panel"><div className="panelHead"><h2>Inventory Value Basis</h2></div><div className="metric">₹ {stockValue.toLocaleString(undefined,{maximumFractionDigits:2})}</div><div className="empty">Current quantity × pack size. Purchase/sales valuation will be finalized with transaction modules.</div></div></div>
-  <div className="panel tablePanel"><div className="panelHead"><h2>Stock Alerts</h2></div>{lowStock.length?<div className="alertList">{lowStock.map(p=><div className="alert" key={p.id}><AlertTriangle size={17}/><span>{p.product_name} is at or below minimum stock.</span></div>)}</div>:<div className="empty">No low-stock alerts.</div>}</div></>
 }
 
 function Products({products,stock,reload}) {
@@ -224,10 +250,10 @@ function PurchaseModal({products,suppliers,close,reload}) {
     setSaving(false);if(error)alert(error.message);else{reload();close()}
   }
   return <div className="modalBack"><div className="modal wide"><div className="modalHead"><div><h2>New Purchase</h2><span>Stock increases automatically</span></div><button onClick={close}><X/></button></div>
-  <form onSubmit={save}><div className="formGrid"><label>Supplier<select required value={supplier} onChange={e=>setSupplier(e.target.value)}>{suppliers.map(s=><option key={s.id} value={s.id}>{s.supplier_name}</option>)}</select></label><label>Date<input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label></div>
+  <form onSubmit={save}><div className="formGrid"><label>Supplier<select required value={supplier} onChange={e=>setSupplier(e.target.value)}>{suppliers.map(s=><option key={s.id} value={s.id}>{s.supplier_name}</option>)}</select></label><label>Date<input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label><label>Time (auto)<input type="text" value={now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true})} readOnly /></label></div>
   <div className="purchaseRows">{rows.map((r,i)=><div className="purchaseRow" key={i}><select required value={r.product_id} onChange={e=>productChanged(i,e.target.value)}>{products.map(p=><option key={p.id} value={p.id}>{p.product_name} ({p.pack_size} {p.unit})</option>)}</select><input required placeholder="Batch No." value={r.batch_no} onChange={e=>update(i,'batch_no',e.target.value)}/><input type="number" min=".001" step=".001" value={r.quantity} onChange={e=>update(i,'quantity',e.target.value)}/><input type="number" min="0" step=".01" value={r.rate} onChange={e=>update(i,'rate',e.target.value)}/><input type="number" min="0" step=".01" placeholder="GST %" value={r.gst} onChange={e=>update(i,'gst',e.target.value)}/>{rows.length>1&&<button type="button" onClick={()=>setRows(a=>a.filter((_,j)=>j!==i))}><Trash2/></button>}</div>)}</div>
   <button type="button" className="secondary addrow" onClick={()=>setRows(a=>[...a,{product_id:products[0]?.id||'',batch_no:'',quantity:1,rate:products[0]?.purchase_rate||0,gst:0}])}><Plus size={15}/> Add Item</button>
-  <div className="purchaseTotals"><label>Discount<input type="number" min="0" value={discount} onChange={e=>setDiscount(e.target.value)}/></label><label>Transport<input type="number" min="0" value={transport} onChange={e=>setTransport(e.target.value)}/></label><label>Paid<input type="number" min="0" value={paid} onChange={e=>setPaid(e.target.value)}/></label><label>Payment<select value={mode} onChange={e=>setMode(e.target.value)}><option>Credit</option><option>Cash</option><option>UPI</option><option>Bank</option></select></label><div className="totalBox">Grand Total <strong>₹{grand.toFixed(2)}</strong><small>Due: ₹{Math.max(0,grand-Number(paid||0)).toFixed(2)} · GST: ₹{gst.toFixed(2)}</small></div></div>
+  <div className="purchaseTotals"><div className="miniTotal"><span>Subtotal</span><strong>₹{subtotal.toFixed(2)}</strong></div><label>Discount<input type="number" min="0" value={discount} onChange={e=>setDiscount(e.target.value)}/></label><label>Transport<input type="number" min="0" value={transport} onChange={e=>setTransport(e.target.value)}/></label><label>Paid<input type="number" min="0" value={paid} onChange={e=>setPaid(e.target.value)}/></label><label>Payment<select value={mode} onChange={e=>setMode(e.target.value)}><option>Credit</option><option>Cash</option><option>UPI</option><option>Bank</option></select></label><div className="totalBox">Grand Total <strong>₹{grand.toFixed(2)}</strong><small>Due: ₹{Math.max(0,grand-Number(paid||0)).toFixed(2)} · GST: ₹{gst.toFixed(2)}</small></div></div>
   <div className="modalFoot"><button type="button" className="secondary" onClick={close}>Cancel</button><button className="primary" disabled={saving||!suppliers.length||!products.length}>{saving?'Saving...':'Save Purchase'}</button></div></form></div></div>
 }
 
@@ -247,8 +273,8 @@ function Sales({products,customers,stock,reload,businessSettings}) {
   useEffect(()=>{ if(!supabase)return; supabase.from('sales').select('*, customers(customer_name,mobile,address,gstin), sale_items(*, products(product_name,pack_size,unit))').order('created_at',{ascending:false}).limit(50).then(({data})=>setSales(data||[])) },[])
   return <div>
     <div className="panel"><div className="panelHead"><h2>Sales & Billing</h2><span className="count">{sales.length} recent invoices</span></div>
-      <div className="tableWrap"><table><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Subtotal</th><th>GST</th><th>Total</th><th>Paid</th><th>Due</th><th></th></tr></thead>
-      <tbody>{sales.length?sales.map(x=><tr key={x.id}><td><strong>{x.invoice_no}</strong></td><td>{x.sale_date}</td><td>{x.customers?.customer_name||'Walk-in'}</td><td>₹{Number(x.subtotal||0).toFixed(2)}</td><td>₹{Number(x.gst||0).toFixed(2)}</td><td>₹{Number(x.grand_total||0).toFixed(2)}</td><td>₹{Number(x.paid||0).toFixed(2)}</td><td>₹{Number(x.due||0).toFixed(2)}</td><td><button className="secondary smallBtn" onClick={()=>setSelected(x)}>Print</button></td></tr>):<tr><td colSpan="9" className="empty">No sales invoices yet. Create a bill to begin.</td></tr>}</tbody></table></div>
+      <div className="tableWrap"><table><thead><tr><th>Invoice</th><th>Date</th><th>Time</th><th>Customer</th><th>Subtotal</th><th>GST</th><th>Total</th><th>Paid</th><th>Due</th><th></th></tr></thead>
+      <tbody>{sales.length?sales.map(x=><tr key={x.id}><td><strong>{x.invoice_no}</strong></td><td>{x.sale_date}</td><td>{x.created_at?new Date(x.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}):'—'}</td><td>{x.customers?.customer_name||'Walk-in'}</td><td>₹{Number(x.subtotal||0).toFixed(2)}</td><td>₹{Number(x.gst||0).toFixed(2)}</td><td>₹{Number(x.grand_total||0).toFixed(2)}</td><td>₹{Number(x.paid||0).toFixed(2)}</td><td>₹{Number(x.due||0).toFixed(2)}</td><td><button className="secondary smallBtn" onClick={()=>setSelected(x)}>Print</button></td></tr>):<tr><td colSpan="10" className="empty">No sales invoices yet. Create a bill to begin.</td></tr>}</tbody></table></div>
     </div>
     {selected && <InvoicePrint sale={selected} businessSettings={businessSettings} close={()=>setSelected(null)}/>}
   </div>
@@ -257,16 +283,18 @@ function Sales({products,customers,stock,reload,businessSettings}) {
 function SaleModal({products,customers,stock,close,reload}) {
   const batchesFor=p=>stock.filter(s=>s.product_id===p)
   const firstProduct=products[0]?.id||''
-  const [customer,setCustomer]=useState(customers[0]?.id||''),[date,setDate]=useState(new Date().toISOString().slice(0,10)),[paid,setPaid]=useState(0),[discount,setDiscount]=useState(0),[mode,setMode]=useState('Cash'),[saving,setSaving]=useState(false)
+  const now=new Date()
+  const [customer,setCustomer]=useState(customers[0]?.id||''),[date,setDate]=useState(now.toISOString().slice(0,10)),[paid,setPaid]=useState(0),[discount,setDiscount]=useState(0),[mode,setMode]=useState('Cash'),[saving,setSaving]=useState(false)
   const [rows,setRows]=useState([{product_id:firstProduct,batch_no:stock.find(s=>s.product_id===firstProduct)?.batch_no||'',quantity:1,rate:products[0]?.selling_rate||0,gst:products[0]?.gst_percent||0}])
   const subtotal=rows.reduce((n,r)=>n+Number(r.quantity||0)*Number(r.rate||0),0),gst=rows.reduce((n,r)=>n+Number(r.quantity||0)*Number(r.rate||0)*Number(r.gst||0)/100,0),grand=Math.max(0,subtotal-Number(discount||0)+gst)
   const update=(i,k,v)=>setRows(a=>a.map((r,j)=>j===i?{...r,[k]:v}:r))
   const productChanged=(i,id)=>{const p=products.find(x=>x.id===id),b=stock.find(x=>x.product_id===id);setRows(a=>a.map((r,j)=>j===i?{...r,product_id:id,batch_no:b?.batch_no||'',rate:p?.selling_rate||0,gst:p?.gst_percent||0}:r))}
   async function save(e){e.preventDefault();if(!supabase||!customer)return;setSaving(true);const no='INV-'+Date.now();const {error}=await supabase.rpc('create_sale',{p_invoice_no:no,p_customer_id:customer,p_sale_date:date,p_discount:Number(discount||0),p_paid:Number(paid||0),p_payment_mode:mode,p_items:rows.map(r=>({...r,quantity:Number(r.quantity),rate:Number(r.rate),gst:Number(r.gst)}))});setSaving(false);if(error)alert(error.message);else{reload();close()}}
   return <div className="modalBack"><div className="modal wide"><div className="modalHead"><div><h2>New Sales Bill</h2><span>Stock decreases automatically</span></div><button onClick={close}><X/></button></div><form onSubmit={save}><div className="formGrid"><label>Customer<select required value={customer} onChange={e=>setCustomer(e.target.value)}>{customers.map(c=><option key={c.id} value={c.id}>{c.customer_name}</option>)}</select></label><label>Date<input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label></div>
-  <div className="purchaseRows">{rows.map((r,i)=><div className="purchaseRow" key={i}><select required value={r.product_id} onChange={e=>productChanged(i,e.target.value)}>{products.map(p=><option key={p.id} value={p.id}>{p.product_name} ({p.pack_size} {p.unit})</option>)}</select><select required value={r.batch_no} onChange={e=>update(i,'batch_no',e.target.value)}>{batchesFor(r.product_id).map(b=><option key={b.id} value={b.batch_no}>{b.batch_no} — {b.quantity} available</option>)}</select><input type="number" min=".001" step=".001" value={r.quantity} onChange={e=>update(i,'quantity',e.target.value)}/><input type="number" min="0" step=".01" value={r.rate} onChange={e=>update(i,'rate',e.target.value)}/><input type="number" min="0" step=".01" value={r.gst} onChange={e=>update(i,'gst',e.target.value)}/>{rows.length>1&&<button type="button" onClick={()=>setRows(a=>a.filter((_,j)=>j!==i))}><Trash2/></button>}</div>)}</div>
+  <div className="saleItemHead"><span>Product</span><span>Batch</span><span>Quantity</span><span>Rate (₹)</span><span>GST %</span><span>Amount (₹)</span><span></span></div>
+  <div className="purchaseRows saleRows">{rows.map((r,i)=><div className="purchaseRow" key={i}><label className="rowField"><span>Product</span><select required value={r.product_id} onChange={e=>productChanged(i,e.target.value)}>{products.map(p=><option key={p.id} value={p.id}>{p.product_name} ({p.pack_size} {p.unit})</option>)}</select></label><label className="rowField"><span>Batch</span><select required value={r.batch_no} onChange={e=>update(i,'batch_no',e.target.value)}>{batchesFor(r.product_id).map(b=><option key={b.id} value={b.batch_no}>{b.batch_no} — {b.quantity} available</option>)}</select></label><label className="rowField"><span>Quantity</span><input type="number" min=".001" step=".001" value={r.quantity} onChange={e=>update(i,'quantity',e.target.value)}/></label><label className="rowField"><span>Rate (₹)</span><input type="number" min="0" step=".01" value={r.rate} onChange={e=>update(i,'rate',e.target.value)}/></label><label className="rowField"><span>GST %</span><input type="number" min="0" step=".01" value={r.gst} onChange={e=>update(i,'gst',e.target.value)}/></label><label className="rowField"><span>Amount (₹)</span><input className="calculatedAmount" type="text" value={(Number(r.quantity||0)*Number(r.rate||0)).toFixed(2)} readOnly/></label>{rows.length>1&&<button type="button" className="removeRowBtn" aria-label="Remove item" onClick={()=>setRows(a=>a.filter((_,j)=>j!==i))}><Trash2/></button>}</div>)}</div>
   <button type="button" className="secondary addrow" onClick={()=>{const p=products[0];const b=stock.find(s=>s.product_id===p?.id);setRows(a=>[...a,{product_id:p?.id||'',batch_no:b?.batch_no||'',quantity:1,rate:p?.selling_rate||0,gst:p?.gst_percent||0}])}}><Plus size={15}/> Add Item</button>
-  <div className="purchaseTotals"><label>Discount<input type="number" min="0" value={discount} onChange={e=>setDiscount(e.target.value)}/></label><label>Paid<input type="number" min="0" value={paid} onChange={e=>setPaid(e.target.value)}/></label><label>Payment<select value={mode} onChange={e=>setMode(e.target.value)}><option>Cash</option><option>UPI</option><option>Bank</option><option>Credit</option></select></label><div className="totalBox">Grand Total <strong>₹{grand.toFixed(2)}</strong><small>Due: ₹{Math.max(0,grand-Number(paid||0)).toFixed(2)} · GST: ₹{gst.toFixed(2)}</small></div></div>
+  <div className="purchaseTotals"><div className="miniTotal"><span>Subtotal</span><strong>₹{subtotal.toFixed(2)}</strong></div><label>Discount<input type="number" min="0" value={discount} onChange={e=>setDiscount(e.target.value)}/></label><label>Paid<input type="number" min="0" value={paid} onChange={e=>setPaid(e.target.value)}/></label><label>Payment<select value={mode} onChange={e=>setMode(e.target.value)}><option>Cash</option><option>UPI</option><option>Bank</option><option>Credit</option></select></label><div className="totalBox">Grand Total <strong>₹{grand.toFixed(2)}</strong><small>Due: ₹{Math.max(0,grand-Number(paid||0)).toFixed(2)} · GST: ₹{gst.toFixed(2)}</small></div></div>
   <div className="modalFoot"><button type="button" className="secondary" onClick={close}>Cancel</button><button className="primary" disabled={saving||!customers.length||!products.length||!stock.length}>{saving?'Saving...':'Save Bill'}</button></div></form></div></div>
 }
 
@@ -338,7 +366,7 @@ function InvoicePrint({sale,businessSettings,close}) {
   return <div className="modalBack printBack"><div className="invoice modal">
     <div className="invoiceToolbar noPrint"><button className="secondary" onClick={close}>Close</button><button className="primary" onClick={printNow}>Print Invoice</button></div>
     <div className="invoicePage" id="printInvoice">
-      <div className="invoiceTop"><div><h1>{bs.business_name||'My Fertilizer Store'}</h1><p>Fertilizer & Agri Input Dealer</p>{bs.address&&<p>{bs.address}</p>} {(bs.mobile||bs.email)&&<p>{[bs.mobile,bs.email].filter(Boolean).join(' · ')}</p>}<p>GSTIN: {bs.gstin||'—'}</p></div><div className="invoiceMeta"><strong>TAX INVOICE</strong><span>Invoice: {sale.invoice_no}</span><span>Date: {sale.sale_date}</span></div></div>
+      <div className="invoiceTop"><div><h1>{bs.business_name||'My Fertilizer Store'}</h1><p>Fertilizer & Agri Input Dealer</p>{bs.address&&<p>{bs.address}</p>} {(bs.mobile||bs.email)&&<p>{[bs.mobile,bs.email].filter(Boolean).join(' · ')}</p>}<p>GSTIN: {bs.gstin||'—'}</p></div><div className="invoiceMeta"><strong>TAX INVOICE</strong><span>Invoice: {sale.invoice_no}</span><span>Date: {sale.sale_date}</span><span>Time: {sale.created_at?new Date(sale.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}):'—'}</span></div></div>
       <div className="billTo"><strong>Bill To</strong><span>{sale.customers?.customer_name||'Walk-in Customer'}</span><span>{sale.customers?.mobile||''}</span><span>{sale.customers?.address||''}</span><span>GSTIN: {sale.customers?.gstin||'—'}</span></div>
       <table><thead><tr><th>#</th><th>Product</th><th>Batch</th><th>Qty</th><th>Rate</th><th>GST %</th><th>Amount</th></tr></thead><tbody>{items.map((i,n)=><tr key={i.id}><td>{n+1}</td><td>{i.products?.product_name||i.product_id}<small>{i.products?.pack_size} {i.products?.unit}</small></td><td>{i.batch_no}</td><td>{i.quantity}</td><td>₹{Number(i.rate).toFixed(2)}</td><td>{i.gst}%</td><td>₹{Number(i.amount).toFixed(2)}</td></tr>)}</tbody></table>
       <div className="invoiceBottom"><div className="terms"><strong>Terms & Notes</strong><p>Goods once sold are subject to return policy. Please verify quantity and batch.</p></div><div className="invoiceTotals"><span>Subtotal <b>₹{Number(sale.subtotal||0).toFixed(2)}</b></span><span>Discount <b>₹{Number(sale.discount||0).toFixed(2)}</b></span><span>GST <b>₹{Number(sale.gst||0).toFixed(2)}</b></span><strong>Grand Total <b>₹{Number(sale.grand_total||0).toFixed(2)}</b></strong><span>Paid <b>₹{Number(sale.paid||0).toFixed(2)}</b></span><span>Due <b>₹{Number(sale.due||0).toFixed(2)}</b></span></div></div>

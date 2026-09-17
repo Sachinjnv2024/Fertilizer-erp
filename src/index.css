@@ -3,7 +3,7 @@
 
 .secondary{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid #dfe7e4;color:#36534e;border-radius:8px;padding:10px 14px;font-size:12px;cursor:pointer}.warning{display:flex;gap:10px;align-items:center;background:#fff7e5;border:1px solid #f0d99c;color:#765b1e;padding:12px 15px;border-radius:9px;font-size:11px;margin-bottom:18px}.metric{font-size:25px;font-weight:700;padding:18px 18px 0}.count{font-size:10px;color:#8a9794}.tableWrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:11px}th,td{text-align:left;padding:13px 16px;border-bottom:1px solid #edf1f0;white-space:nowrap}th{font-size:10px;color:#84918f;font-weight:600;background:#fbfcfc}td strong{display:block}td small{display:block;color:#9aa6a4;font-size:9px;margin-top:3px}.rowActions{display:flex;gap:4px}.rowActions button{border:0;background:#f4f7f6;color:#637471;border-radius:6px;padding:6px;cursor:pointer}.rowActions svg{width:14px;height:14px}.modalBack{position:fixed;inset:0;background:#0008;display:grid;place-items:center;padding:18px;z-index:50}.modal{background:#fff;width:min(720px,100%);border-radius:14px;box-shadow:0 20px 60px #0003;overflow:hidden}.modalHead{display:flex;justify-content:space-between;align-items:center;padding:19px 22px;border-bottom:1px solid #e9efed}.modalHead h2{font-size:18px}.modalHead span{font-size:10px;color:#8a9895}.modalHead button{border:0;background:#f2f5f4;border-radius:7px;padding:7px;cursor:pointer}.formGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:20px 22px}label{font-size:10px;color:#647572;font-weight:600}input,select{display:block;width:100%;margin-top:6px;height:39px;border:1px solid #dfe7e4;border-radius:7px;padding:0 10px;outline:none;font-size:12px;background:#fff}input:focus,select:focus{border-color:#5db39a}.modalFoot{display:flex;justify-content:flex-end;gap:9px;padding:16px 22px;border-top:1px solid #e9efed}.alertList{padding:12px 18px}.alert{display:flex;gap:8px;align-items:center;padding:10px;border-radius:7px;background:#fff7e5;color:#75591b;font-size:11px;margin-bottom:7px}.module{padding:40px}.moduleIcon{width:55px;height:55px;margin:0 auto 18px;border-radius:14px;background:#e4f5ef;color:#138a68;display:grid;place-items:center}.module p{max-width:600px;margin:10px auto 25px;color:#778683;font-size:12px;line-height:1.7}.coming{display:inline-block;padding:10px 14px;background:#f5f8f7;color:#70807d;border-radius:8px;font-size:11px}@media(max-width:650px){.formGrid{grid-template-columns:1fr}.modalFoot{padding:13px 16px}.tableWrap{margin:0 -1px}th,td{padding:11px 12px}}
 
-.wide{max-width:920px}.purchaseRows{padding:0 22px}.purchaseRow{display:grid;grid-template-columns:2fr 1.2fr .8fr .9fr .7fr auto;gap:8px;margin-bottom:8px}.purchaseRow input,.purchaseRow select{margin-top:0}.purchaseRow button{border:0;background:#f4f7f6;color:#657570;border-radius:6px}.addrow{margin:10px 22px}.purchaseTotals{display:grid;grid-template-columns:repeat(4,1fr) 1.5fr;gap:10px;padding:15px 22px;border-top:1px solid #edf1f0}.totalBox{background:#eef8f4;border-radius:8px;padding:10px;font-size:10px;color:#59716c}.totalBox strong{display:block;font-size:18px;color:#173e36;margin:4px 0}.totalBox small{font-size:9px}@media(max-width:760px){.purchaseRow{grid-template-columns:1fr 1fr}.purchaseTotals{grid-template-columns:1fr 1fr}.totalBox{grid-column:1/-1}}
+.wide{max-width:920px}.purchaseRows{padding:0 22px}.purchaseRow{display:grid;grid-template-columns:2fr 1.2fr .8fr .9fr .7fr 1fr auto;gap:8px;margin-bottom:8px}.purchaseRow input,.purchaseRow select{margin-top:0}.purchaseRow button{border:0;background:#f4f7f6;color:#657570;border-radius:6px}.addrow{margin:10px 22px}.purchaseTotals{display:grid;grid-template-columns:repeat(4,1fr) 1.5fr;gap:10px;padding:15px 22px;border-top:1px solid #edf1f0}.totalBox{background:#eef8f4;border-radius:8px;padding:10px;font-size:10px;color:#59716c}.totalBox strong{display:block;font-size:18px;color:#173e36;margin:4px 0}.totalBox small{font-size:9px}@media(max-width:760px){.purchaseRow{grid-template-columns:1fr 1fr}.purchaseTotals{grid-template-columns:1fr 1fr}.totalBox{grid-column:1/-1}}
 
 .reportTabs{display:flex;gap:6px;overflow:auto;margin-bottom:12px}.reportTab{border:1px solid #dfe7e4;background:#fff;color:#657570;border-radius:8px;padding:9px 12px;font-size:10px;white-space:nowrap;cursor:pointer}.reportTab.active{background:#16463f;color:#fff;border-color:#16463f}.reportFilter{display:flex;align-items:flex-end;gap:10px;padding:13px 16px;margin-bottom:14px}.reportFilter label{min-width:150px}.reportFilter .secondary{height:39px}.reportCards{margin-bottom:14px}.reportSummary{padding:12px 16px;font-size:10px;color:#667672;border-top:1px solid #edf1f0}
 
@@ -42,3 +42,92 @@
 .authScreen{min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--bg,#f5f7fb)}
 .authCard{width:min(420px,100%);background:#fff;border:1px solid var(--line,#e5e7eb);border-radius:20px;padding:32px;box-shadow:0 18px 60px rgba(0,0,0,.08)}
 .authCard h1{margin:14px 0 5px}.authCard form{display:flex;flex-direction:column;gap:15px;margin-top:24px}.authBtn{width:100%;justify-content:center}.linkBtn{border:0;background:none;cursor:pointer;font-size:13px}.logo.big{width:54px;height:54px;font-size:25px}.logoutBtn{border:0;background:transparent;cursor:pointer;display:grid;place-items:center;padding:8px}
+
+
+/* V18 - Reference-inspired mobile-first ERP UI
+   Based on the user's uploaded mobile ERP reference: green header,
+   compact metric cards, rounded cards, four quick actions and bottom navigation feel.
+*/
+@media (max-width:650px){
+  body{background:#e9edf1}
+  .app{max-width:100%;background:#f7f8fa}
+  .sidebar{width:290px;background:#0d2f2b;box-shadow:12px 0 35px rgba(0,0,0,.18)}
+  .main{background:#f7f8fa}
+  header{
+    height:auto;min-height:112px;padding:15px 14px 18px;
+    background:#126b45;color:#fff;border:0;border-radius:0 0 20px 20px;
+    position:sticky;top:0;z-index:12
+  }
+  header .menu{color:#fff}
+  header .search{
+    order:2;display:flex;max-width:none;width:100%;height:42px;
+    flex-basis:100%;background:#fff;border:0;border-radius:11px;
+    box-shadow:0 2px 10px rgba(0,0,0,.08)
+  }
+  header .search input{font-size:12px;color:#26332f}
+  header .iconbtn{color:#fff}
+  header .avatar{background:#e9f7ef;color:#126b45}
+  header .logoutBtn{color:#fff}
+  header{flex-wrap:wrap}
+  .content{padding:14px 14px 86px;max-width:100%}
+  .titleRow{margin:0 2px 12px;gap:8px}
+  .eyebrow{color:#126b45;font-size:9px}
+  h1{font-size:21px;letter-spacing:-.03em}
+  .titleRow .muted{font-size:10px}
+  .titleRow>.primary,.titleRow>.secondary{width:auto;min-width:0;padding:9px 11px}
+  .cards{grid-template-columns:1fr 1fr;gap:9px;margin-bottom:11px}
+  .card{
+    border:0;border-radius:14px;padding:13px;
+    box-shadow:0 2px 10px rgba(0,0,0,.055)
+  }
+  .card span{font-size:10px;margin-bottom:7px;color:#78838e}
+  .card strong{font-size:19px;margin-bottom:4px}
+  .card small{font-size:9px}
+  .grid2{grid-template-columns:1fr;gap:10px;margin-bottom:10px}
+  .panel{
+    border:0;border-radius:14px;
+    box-shadow:0 2px 10px rgba(0,0,0,.055);overflow:hidden
+  }
+  .panelHead{padding:13px 14px;border-bottom:1px solid #edf0f2}
+  .panelHead h2{font-size:14px}
+  .actions{grid-template-columns:repeat(2,1fr);gap:8px;padding:12px}
+  .actions button{
+    border:0;background:#f7faf9;border-radius:12px;padding:12px;
+    font-size:10px;min-height:54px
+  }
+  .actions button svg{width:18px;height:18px;color:#126b45}
+  .salesGraph{min-height:190px;padding:20px 10px 14px}
+  .graphCol{min-width:30px}
+  .graphBar{max-width:28px;border-radius:7px 7px 3px 3px}
+  .graphCol span{font-size:9px}
+  .alertList{padding:10px 12px}
+  .alert{border-radius:10px;font-size:10px}
+  .module{padding:30px 16px;min-height:280px}
+  .tableWrap{border-radius:0}
+  th,td{padding:10px 11px;font-size:10px}
+  th{font-size:9px}
+  .modalBack{padding:8px}
+  .modal{border-radius:18px;max-height:94vh}
+  .modalHead{padding:15px 16px}
+  .formGrid{padding:14px 16px;gap:11px}
+  input,select{height:42px;border-radius:10px}
+  .modalFoot{padding:12px 16px}
+  .primary,.secondary{border-radius:10px}
+}
+
+/* Give the dashboard the same compact quick-action feel on larger screens too. */
+@media(min-width:651px){
+  .content{max-width:1450px}
+  .card{border-radius:15px}
+  .panel{border-radius:15px}
+  .actions button{border-radius:10px}
+}
+
+/* Sales billing field labels */
+.saleItemHead{display:grid;grid-template-columns:2fr 1.2fr .8fr .9fr .7fr auto;gap:8px;padding:0 22px 6px;color:#84918f;font-size:10px;font-weight:700}
+.saleRows .purchaseRow{align-items:end}.calculatedAmount{background:#f4f8f6!important;font-weight:700;color:#173e36!important}.miniTotal{display:flex;flex-direction:column;justify-content:center;background:#f6f8f7;border-radius:8px;padding:10px;color:#647572;font-size:10px}.miniTotal strong{font-size:15px;color:#173e36;margin-top:3px}
+.rowField{font-size:10px;color:#647572;font-weight:600}
+.rowField>span{display:block;margin-bottom:5px}
+.rowField input,.rowField select{margin-top:0}
+.removeRowBtn{height:39px;display:grid;place-items:center;border:0;background:#f4f7f6;color:#657570;border-radius:6px;cursor:pointer}
+@media(max-width:760px){.saleItemHead{display:none}.saleRows .purchaseRow{grid-template-columns:1fr 1fr}.saleRows .rowField:first-child,.saleRows .rowField:nth-child(2){grid-column:span 2}.saleRows .removeRowBtn{width:39px}}

@@ -1,0 +1,45 @@
+
+:root{
+  --erp-bg:#f5f7fb;
+  --erp-card:#ffffff;
+  --erp-text:#172033;
+  --erp-muted:#687386;
+  --erp-border:#e6eaf0;
+  --erp-primary:#155eef;
+  --erp-primary-2:#0b4fd1;
+  --erp-success:#0f9d68;
+  --erp-danger:#d92d20;
+  --erp-shadow:0 10px 30px rgba(16,24,40,.07);
+  --erp-radius:16px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--erp-bg);color:var(--erp-text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}
+button{transition:.18s ease}
+button:hover{transform:translateY(-1px)}
+input,select,textarea{border:1px solid var(--erp-border);border-radius:10px;background:#fff;padding:10px 12px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#9bbcff;box-shadow:0 0 0 3px rgba(21,94,239,.10)}
+.erp-card,.card,.panel{background:var(--erp-card);border:1px solid var(--erp-border);border-radius:var(--erp-radius);box-shadow:var(--erp-shadow)}
+.erp-card{padding:20px}
+.erp-section-title{font-size:18px;font-weight:750;letter-spacing:-.02em}
+.erp-muted{color:var(--erp-muted)}
+.erp-primary{background:var(--erp-primary);color:#fff;border:0;border-radius:10px;padding:10px 16px;font-weight:650}
+.erp-primary:hover{background:var(--erp-primary-2)}
+.erp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.erp-stat{padding:18px;border:1px solid var(--erp-border);border-radius:14px;background:#fff}
+.erp-stat-label{font-size:12px;color:var(--erp-muted);font-weight:650;text-transform:uppercase;letter-spacing:.05em}
+.erp-stat-value{margin-top:7px;font-size:26px;font-weight:800;letter-spacing:-.03em}
+.erp-table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid var(--erp-border);border-radius:12px;background:#fff}
+.erp-table th{background:#f8fafc;color:#667085;font-size:12px;text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:12px;border-bottom:1px solid var(--erp-border)}
+.erp-table td{padding:13px 12px;border-bottom:1px solid #eef1f5;font-size:14px}
+.erp-table tr:last-child td{border-bottom:0}
+@media(max-width:700px){
+  .erp-card{padding:14px}
+  .erp-stat-value{font-size:22px}
+  .erp-table{display:block;overflow-x:auto;white-space:nowrap}
+}
+
+.salesGraph{height:190px;display:flex;align-items:flex-end;justify-content:space-around;gap:12px;padding:12px 8px 0;border-top:1px solid var(--erp-border)}
+.graphCol{height:100%;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;color:var(--erp-muted);font-size:11px}
+.graphBar{width:min(34px,70%);min-height:6px;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,var(--erp-primary),#8fb4ff);transition:height .3s ease}
+.graphBar:hover{filter:brightness(.92);transform:scaleX(1.06)}
